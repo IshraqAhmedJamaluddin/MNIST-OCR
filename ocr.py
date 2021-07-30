@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-DEBUG = True
+DEBUG = False
 
 if DEBUG:
     from PIL import Image
@@ -96,23 +96,31 @@ def knn(X_train, y_train, X_test, k=3):
     return y_pred
 
 def main():
-    X_train = read_images(TRAIN_DATA_FILENAME, 1000)
-    y_train = read_labels(TRAIN_LABELS_FILENAME)
-    X_test = read_images(TEST_DATA_FILENAME, 5)
-    y_test = read_labels(TEST_LABELS_FILENAME)
+    X_train = read_images(TRAIN_DATA_FILENAME, 30000)
+    y_train = read_labels(TRAIN_LABELS_FILENAME, 30000)
+    X_test = read_images(TEST_DATA_FILENAME, 300)
+    y_test = read_labels(TEST_LABELS_FILENAME, 300)
 
     if DEBUG:
         for idx, test_sample in enumerate(X_test):
             write_image(test_sample, f'{TEST_DIR}{idx}.png')
 
+        X_test = [read_image(f'{DATA_DIR}our_test.png')]
+        y_test = [bytes(3)]
+
     X_train = extract_features(X_train)
     X_test = extract_features(X_test)
 
-    # print(f'Point is {y_test[test_sample_idx]} and we guessed {candidates}')
-    # top_candidate = 5
+    y_pred = knn(X_train, y_train, X_test, 7)
+    
+    accuracy = sum([
+        int(y_pred_i == y_test_i)
+        for y_pred_i, y_test_i
+        in zip(y_pred, y_test)
+    ]) / len(y_test)
 
-    y_pred = knn(X_train, y_train, X_test, 3)
     print(y_pred)
+    print(accuracy)
 
 if __name__ == '__main__':
     main()

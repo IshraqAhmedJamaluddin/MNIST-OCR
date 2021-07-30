@@ -1,6 +1,26 @@
 #!/usr/bin/env python
 
+DEBUG = True
+
+if DEBUG:
+    from PIL import Image
+    import numpy as np
+
+    def read_image(path):
+        return np.asarray(Image.open(path).convert('L'))
+
+    def write_image(image, path):
+        img_bites = []
+        for row in image:
+            row = []
+            for pixel in image:
+                row.append(bytes(pixel))
+            img_bites.append(row)
+        img = Image.fromarray(np.array(img_bites), 'L')
+        img.save(path)
+
 DATA_DIR = 'data/'
+TEST_DIR = 'test/'
 
 TEST_DATA_FILENAME = DATA_DIR + 't10k-images.idx3-ubyte'
 TEST_LABELS_FILENAME = DATA_DIR + 't10k-labels.idx1-ubyte'
@@ -56,7 +76,10 @@ def dist(x, y):
 def get_training_distances_for_test_sample(X_train, test_sample):
     return [dist(train_sample, test_sample) for train_sample in X_train]
 
-def knn(X_train, y_train, X_test, y_test, k=3):
+def get_most_frequent_element(l):
+    return max(l, key=l.count)
+
+def knn(X_train, y_train, X_test, k=3):
     y_pred = []
     for test_sample_idx, test_sample in enumerate(X_test):
         training_distances = get_training_distances_for_test_sample(X_train, test_sample)
@@ -68,9 +91,8 @@ def knn(X_train, y_train, X_test, y_test, k=3):
             y_train[idx]
             for idx in sorted_distance_indices[:k]
         ]
-        print(f'Point is {y_test[test_sample_idx]} and we guessed {candidates}')
-        y_sample = 5
-        y_pred.append(y_sample)
+        top_candidate = get_most_frequent_element(candidates)
+        y_pred.append(top_candidate)
     return y_pred
 
 def main():
@@ -79,10 +101,18 @@ def main():
     X_test = read_images(TEST_DATA_FILENAME, 5)
     y_test = read_labels(TEST_LABELS_FILENAME)
 
+    if DEBUG:
+        for idx, test_sample in enumerate(X_test):
+            write_image(test_sample, f'{TEST_DIR}{idx}.png')
+
     X_train = extract_features(X_train)
     X_test = extract_features(X_test)
-    
-    knn(X_train, y_train, X_test, y_test, 3)
+
+    # print(f'Point is {y_test[test_sample_idx]} and we guessed {candidates}')
+    # top_candidate = 5
+
+    y_pred = knn(X_train, y_train, X_test, 3)
+    print(y_pred)
 
 if __name__ == '__main__':
     main()
